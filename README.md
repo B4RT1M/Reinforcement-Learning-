@@ -3,25 +3,27 @@
 If you want to visit the reinforcement learning course click on the following link: 
 https://rob.ai-lab.science/teaching/reinforcement-learning-ro5102-t/
 
-Assignement 1: 
+Assignment 1: 
 you can find an description for the first Assignement here: https://drive.google.com/drive/u/0/folders/1Wf1Unco_GhDrTBZ_d7VY7eYsHxrvApX9
 
-Assignement 2: 
+A detailed description of our solution can be found here: https://www.overleaf.com/read/cwfzxhzdtppf
+
+Assignment 2: 
 
 ! Not published yet ! 
 
-Assignement 3: 
+Assignment 3: 
 
 ! Not published yet !
 
-Assignement 4: 
+Assignment 4: 
 
 ! Not published yet ! 
 
-Assignement 5: 
+Assignment 5: 
 
 ! Not published yet ! 
 
-Assignement 6: 
+Assignment 6: 
 
 ! Not published yet !
