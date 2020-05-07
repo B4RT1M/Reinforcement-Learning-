@@ -1,5 +1,5 @@
 # Reinforcement-Learning-
-
+TODO: set up a wiki
 If you want to visit the reinforcement learning course click on the following link: 
 https://rob.ai-lab.science/teaching/reinforcement-learning-ro5102-t/
 
