@@ -1,71 +1,65 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr  6 19:13:02 2020
+Created on Mon Apr  6 19:32:22 2020
 
 @author: hongh
 """
-
 import numpy as np
-import gym
 import matplotlib.pyplot as plt
-env = gym.make('FrozenLake-v0')
+import gym
+# for the console: %matplotlib qt
 
-
-def value_iter(env, gamma, theta):
+def policy_iter(env, gamma, theta):
     """To Do : Implement Policy Iteration Algorithm
     gamma (float) - discount factor
     theta (float) - termination condition
     env - environment with following required memebers:
-        
+    
     Useful variables/functions:
         
-            env.nb_states - number of states (AttributeError: 'FrozenLakeEnv' object has no attribute 'nb_states')
+            env.nb_states - number of states
             env.nb_action - number of actions
             env.model     - prob-transitions and rewards for all states and actions, you can play around that
-            
-            The right command are: 
-                https://github.com/keerthanpg/FrozenLake-Reinforcement-Learning/blob/master/README.md
-            env.nS - number of states
-            env.nA - number of actions
-            env.P  - transitions, rewards, terminals 
-                env.P form: P[s][a] = [(prob, nextstate, reward, is_terminal), ...]
+        
         
         return the value function V and policy pi, 
         pi should be a determinstic policy and an illustration of randomly initialized policy is below
     """
+    # initialize the random policy
+    pi = np.random.randint(low=0, high=env.action_space.n, size=env.nS)
     # Initialize the value function
-    V = np.zeros(env.nS)  
-    pi = np.zeros(env.nS)
-    # to do
-    max_it = 100000 # max_iterations 
-    for i in range(max_it): 
-        prev_V = np.copy(V) # copy of V 
-        for s in range(env.nS):
-            q_sa = [sum([p*(r + gamma * prev_V[s_]) for p, s_, r, _ in env.P[s][a]]) for a in range(env.nA)] 
-            V[s] = max(q_sa)
-            
-        if (np.sum(np.fabs(prev_V - V)) <= theta):
-            print ('Value-iteration converged at iteration# %d.' %(i+1))
-            break   
-        
-        pi = compute_pi(env, V, gamma, pi)
-
-#I'm not sure about this 
-#            for a in range(env.action_space.n):
-#                for next_sr in env.P[s][a]:
-#                    # next_sr is a tuple of (probability, next state, reward, done)
-#                    p, s_, r, _ = next_sr
-#                    q_sa[a] += (p * (r + gamma * V[s_]))
-#        pi[s] = np.argmax(q_sa)
+    V = np.zeros(env.nS)
+    
+    max_iter = 100000 # max iterations 
+    
+    for i in range(max_iter):
+        old_V = compute_V(env, pi, gamma, theta) 
+        new_pi = compute_pi(env, old_V, gamma)
+        if(np.all(pi == new_pi)):
+            print('Policy-Iteration converged at step %d.' %(i+1))
+            break 
+        pi = new_pi
     return V, pi
 
-def compute_pi(env, old_V, gamma, pi):
+def compute_V(env, pi, gamma, theta):
+    V = np.zeros(env.nS)
+    while True:
+        prev_V = np.copy(V) # copy of V
+        for s in range(env.nS):
+            temp = pi[s]        
+            V[s] = sum([p *(r + gamma * prev_V[s_]) for p, s_, r, _ in env.P[s][temp]])
+        if (np.sum(np.fabs(prev_V - V)) <= theta):
+            break
+    return V    
+
+def compute_pi(env, old_V, gamma):
+    pi = np.zeros(env.nS)
     for s in range(env.nS):
         q_sa = np.zeros(env.nA)
         for a in range(env.nA):
             q_sa[a] = sum([p * (r + gamma * old_V[s_]) for p, s_, r, _ in  env.P[s][a]])
         pi[s] = np.argmax(q_sa)
-    return pi 
+    return pi            
 
 def run_episode(env, policy, gamma, render):
     """ Evaluates policy by using it to run an episode and finding its
@@ -91,7 +85,6 @@ def run_episode(env, policy, gamma, render):
             break
     return total_reward, step_idx
 
-
 def discrete_matshow(data, labels_names=[], title=""):
     # get discrete colormap
     cmap = plt.get_cmap('Paired', np.max(data) - np.min(data) + 1)
@@ -111,32 +104,37 @@ def discrete_matshow(data, labels_names=[], title=""):
     if title:
         plt.suptitle(title, fontsize=14, fontweight='bold')
 
+
 if __name__ == '__main__':
+    env = gym.make('FrozenLake-v0')
     #env.reset()
     #env.render()
     
-    gamma = 1.0
+
+    # Check #state, #actions and transition model
+    # env.model[state][action]
+    print(env.nS, env.nA, env.P[14][2])
+
+
+    # display the result
+    gamma = 1.0    
     r = 0.
-    runs = 100
+    runs= 100
     
     labels_names=[]
     
-    # Check #state, #actions and transition model
-    # env.P[state][action]
-    print(env.nS, env.nA, env.P[14][2])
-        
-  
-    V, pi = value_iter(env, gamma, theta=1e-4)
-    print(V.reshape([4, -1]))
     
+    V, pi = policy_iter(env, gamma, theta=1e-5)
+    print(V.reshape([4, -1]))    
     
     a2w = {0:'<', 1:'v', 2:'>', 3:'^'}
     policy_arrows = np.array([a2w[x] for x in pi])
     print(np.array(policy_arrows).reshape([-1, 4]))
     
+    #labels_names.append(a2w.values())
     [labels_names.extend([k]) for k in a2w.values()]
     
-    discrete_matshow(np.array(pi).reshape([-1, 4]), labels_names, title="policy - value iteration")
+    discrete_matshow(np.array(pi).reshape([-1, 4]), labels_names, title="policy - policy iteration")
     
     
     for k in range(runs):
@@ -145,4 +143,10 @@ if __name__ == '__main__':
         print('Steps needed to finished the run:  %d.' %steps)
         r += total_reward
         
-    print('successful runs out of 100: %d' %r)
+    print('successful runs out of 100: %d' %r)    
+    
+
+    
+    
+
+    
