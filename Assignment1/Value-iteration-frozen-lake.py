@@ -146,3 +146,4 @@ if __name__ == '__main__':
         r += total_reward
         
     print('successful runs out of 100: %d' %r)
+    

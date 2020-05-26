@@ -37,6 +37,7 @@ def policy_iter(env, gamma, theta):
         new_pi = compute_pi(env, old_V, gamma)
         if(np.all(pi == new_pi)):
             print('Policy-Iteration converged at step %d.' %(i+1))
+            V = old_V
             break 
         pi = new_pi
     return V, pi
@@ -113,7 +114,7 @@ if __name__ == '__main__':
 
     # Check #state, #actions and transition model
     # env.model[state][action]
-    print(env.nS, env.nA, env.P[14][2])
+    #print(env.nS, env.nA, env.P[14][2])
 
 
     # display the result
