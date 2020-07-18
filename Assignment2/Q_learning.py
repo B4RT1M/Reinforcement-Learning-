@@ -19,7 +19,7 @@ class Q_Learner(object):
         self.action_shape = env.action_space.n
 
         # Q-values, Initialize the Q table with -1e-7 , in the last task, you can initialize it with 0 and compare the results, for task III and question III with alpha = 1/#visit
-        self.Q = np.ones((self.obs_bins[0] + 1, self.obs_bins[1] + 1, self.action_shape)) * (-1e7)#0 # (20x 15 x 3)
+        self.Q = np.ones((self.obs_bins[0] + 1, self.obs_bins[1] + 1, self.action_shape)) * (-1e7)#0 # (21x 16x x 3)
         # Initialize the visit_counts
         self.visit_counts = np.zeros((self.obs_bins[0] + 1, self.obs_bins[1] + 1, self.action_shape))
         self.alpha = 0.05  # Learning rate
@@ -49,8 +49,16 @@ class Q_Learner(object):
         
         return action
 
-
-    def update_Q_table(self, obs, action, reward, done, next_obs):
+    def calculate_alpha(self, task3_3, d1, d2, action):
+        '''
+            update alpha
+        '''
+        if task3_3:
+            self.alpha = 1/(self.visit_counts[d1,d2,action] + 1)
+        else: 
+            self.alpha = 0.05    
+    
+    def update_Q_table(self, obs, action, reward, done, next_obs, task3_3):
         '''
            update the Q table self.Q given each state,action ,reward... 
            No parameters for return
@@ -59,13 +67,15 @@ class Q_Learner(object):
         discretized_state1 = self.discretize(obs)
         discretized_state2 = self.discretize(next_obs)
         
+        self.calculate_alpha(task3_3, discretized_state1[0], discretized_state1[1], action)
+        
         predict = self.Q[discretized_state1[0], discretized_state1[1], action]
-        # TODO : change target 
+         
         target = reward + self.gamma * np.max(self.Q[discretized_state2[0], discretized_state2[1], :])
         self.Q[discretized_state1[0],discretized_state1[1], action] = self.Q[discretized_state1[0],discretized_state1[1], action] + self.alpha * (target - predict)
         
 
-def train(agent, env, MAX_NUM_EPISODES, max_eps_length):
+def train(agent, env, MAX_NUM_EPISODES, max_eps_length, task3, task3_3):
     ''' 
         Implement one step Q-learning algorithm with decaying epsilon-greedy explroation and plot the episodic reward w.r.t. each training episode
         
@@ -79,8 +89,13 @@ def train(agent, env, MAX_NUM_EPISODES, max_eps_length):
     policy = np.zeros((agent.Q.shape[0],agent.Q.shape[1]))
     rewards = []
     for episode in range(MAX_NUM_EPISODES):
-        # update the epsilon for decaying epsilon-greedy exploration
-        agent.epsilon = 1 - episode/MAX_NUM_EPISODES
+        
+        if task3: 
+            agent.epsilon = 0.05 # 5%
+        else:
+            # update the epsilon for decaying epsilon-greedy exploration
+            agent.epsilon = 1 - episode/MAX_NUM_EPISODES
+        
         # initialize the state
         obs = env.reset()
 
@@ -95,7 +110,8 @@ def train(agent, env, MAX_NUM_EPISODES, max_eps_length):
         # (3) Update the Q tables using agent.update_Q_table()
         # (4) also record the episodic cumulative reward 'total_reward'
         # (5) Update the visit_counts per state-action pair
-        while k < max_eps_length: 
+        while k < max_eps_length:  
+            
             # (1) Select an action for the current state
             action1 = agent.get_action(obs)
             
@@ -103,7 +119,7 @@ def train(agent, env, MAX_NUM_EPISODES, max_eps_length):
             obs2, reward, done, info = env.step(action1)
             
             # (3) Update the Q tables 
-            agent.update_Q_table(obs, action1, reward, done, obs2)
+            agent.update_Q_table(obs, action1, reward, done, obs2, task3_3)
             
             # (4) record the episodic cumulative reward 
             total_reward += reward
@@ -111,7 +127,8 @@ def train(agent, env, MAX_NUM_EPISODES, max_eps_length):
             # (5) Update the visit_counts per state action pair
             d_state = agent.discretize(obs)
             
-            agent.visit_counts[d_state[0],d_state[1], action1] = agent.visit_counts[d_state[0],d_state[1], action1] + 1
+            agent.visit_counts[d_state[0],d_state[1], action1] +=  1
+            #print(agent.visit_counts[d_state[0],d_state[1], action1])
             
             obs = obs2
             #action1 = action2
@@ -172,14 +189,17 @@ if __name__ == "__main__":
     ''' 
     TODO : You need to add code for plotting the result.
     '''
-    MAX_NUM_EPISODES = 2000
+    MAX_NUM_EPISODES = 2000 # 2000
     env = gym.make('MountainCar-v0').env # Note: the episode only terminates when cars reaches the target, the max episode length is not clipped to 200 steps.
     agent = Q_Learner(env)
     max_eps_length = 1000
     rewards_4_plot = []
+    task3 = False # if we want to stay epsilon fixed to 5%
+    task3_3 = False # if we want to have alpah = 1/N_visited
+    
     for _ in range(5):
         
-        learned_policy, Q, visit_counts, rewards = train(agent, env, MAX_NUM_EPISODES, max_eps_length)
+        learned_policy, Q, visit_counts, rewards = train(agent, env, MAX_NUM_EPISODES, max_eps_length, task3, task3_3)
         rewards_4_plot.append(rewards)
         
     # after training, test the policy 10 times.
@@ -188,10 +208,7 @@ if __name__ == "__main__":
     #    print("Test reward: {}".format(reward))
     env.close()
     
-    with open("Q_learning_rewards.json", "w") as f:
-        json.dump(rewards_4_plot, f, indent = 2)
-        
-    with open("Q_learning_rewards.json", 'r') as f:
-        score = json.load(f)
-        
-    print(score)    
+    #with open("Q_learning_rewards_task3_n.json", "w") as f:
+    #    json.dump(rewards_4_plot, f, indent = 2)
+      
+    

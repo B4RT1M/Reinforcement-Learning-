@@ -77,7 +77,7 @@ def interact_and_record(env,policy,EPSILON):
     return state_action_return, state_action_trajectory
 
     
-def monte_carlo(env, EPSILON, N_EPISODES):
+def monte_carlo(env, EPSILON, N_EPISODES, task3):
     # Initialize the random policy , useful function: np.random.choice()  env.nA, env.nS
     policy = np.random.choice(env.nA, env.nS) # Generate a uniform random sample from np.arange(env.nA) of size env.nS (1 x env.nS)
     # Intialize the Q table and number of visit per state-action pair to 0 using np.zeros()
@@ -90,8 +90,11 @@ def monte_carlo(env, EPSILON, N_EPISODES):
         
     # MC approaches starts learning
     for i in range(N_EPISODES):
-        # Determine the value for epsilon in decaying epsilon-greedy exploration strategy 
-        epsilon = 1 - i/N_EPISODES # epsilon = 1 - E_c/E_t 
+        # Determine the value for epsilon in decaying epsilon-greedy exploration strategy
+        if task3: 
+            epsilon = 0.05 # 5%
+        else:    
+            epsilon = 1 - i/N_EPISODES # epsilon = 1 - E_c/E_t 
         # Interact with env and record the necessary info for one episode.
         state_action_return, state_action_trajectory = interact_and_record(env,policy,epsilon)
       
@@ -148,14 +151,15 @@ if __name__ == '__main__':
     env = gym.make('FrozenLake-v0')
     
     random_seed = 23333 # Don't change
-    N_EPISODES = 150000 # Don't change
+    N_EPISODES = 150000#150000 # Don't change
+    task3 = True
     if random_seed:
         env.seed(random_seed)
         np.random.seed(random_seed)
     GAMMA = 1.0
     start = time.time()
     
-    policy,visit = monte_carlo(env,EPSILON=1.0,N_EPISODES=N_EPISODES) # I'm not sure about the sense of this EPSILON
+    policy,visit = monte_carlo(env,EPSILON=1.0,N_EPISODES=N_EPISODES, task3 = True) # I'm not sure about the sense of this EPSILON
     print('TIME TAKEN {} seconds'.format(time.time()-start))
     a2w = {0:'<', 1:'v', 2:'>', 3:'^'}
     # Convert the policy action into arrows
@@ -164,10 +168,10 @@ if __name__ == '__main__':
     print(np.array(policy_arrows).reshape([-1, 4]))
     
     success = 0 # show how we often our found policy successfully run to the goal
-    total_reward, steps = run_eps(env, policy, 1.0, True)
-    #for k in range(100):
-    #    total_reward, steps = run_eps(env, policy, 1.0, True)
-    #    success += total_reward 
+    #total_reward, steps = run_eps(env, policy, 1.0, True)
+    for k in range(100):
+        total_reward, steps = run_eps(env, policy, 1.0, False)
+        success += total_reward 
         
     print('successful runs out of 100: %d' %success)    
     

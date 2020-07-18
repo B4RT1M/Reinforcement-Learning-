@@ -65,7 +65,7 @@ class SARSA_Learner(object):
         self.Q[discretized_state1[0],discretized_state1[1], action] = self.Q[discretized_state1[0],discretized_state1[1], action] + self.alpha * (target - predict)
 
         
-def train(agent, env, MAX_NUM_EPISODES,max_eps_length):
+def train(agent, env, MAX_NUM_EPISODES,max_eps_length, task3):
     ''' 
         Implement one step Q-learning algorithm with decaying epsilon-greedy explroation and plot the episodic reward w.r.t. each training episode
         
@@ -80,8 +80,12 @@ def train(agent, env, MAX_NUM_EPISODES,max_eps_length):
     rewards = []
     
     for episode in range(MAX_NUM_EPISODES):
-        # update the epsilon for decaying epsilon-greedy exploration
-        agent.epsilon = 1 - episode/MAX_NUM_EPISODES
+        
+        if task3: 
+            agent.epsilon = 0.05 # 5%
+        else:
+            # update the epsilon for decaying epsilon-greedy exploration
+            agent.epsilon = 1 - episode/MAX_NUM_EPISODES
         # initialize the state
         obs = env.reset()
         # (1) Select an action for the current state
@@ -175,14 +179,15 @@ if __name__ == "__main__":
     TODO : You need to add code for plotting the result.
     '''
     MAX_NUM_EPISODES = 2000 
+    task3 = False # if want to have epsilon = 5%
     env = gym.make('MountainCar-v0').env     # Note: the episode only terminates when cars reaches the target, the max episode length is not clipped to 200 steps.
     agent = SARSA_Learner(env)
     max_eps_length = 1000
     rewards_4_plot = []
     
-    for _ in range(5):
+    for _ in range(100):
             
-        learned_policy, Q, visit_counts, rewards = train(agent, env, MAX_NUM_EPISODES,max_eps_length)
+        learned_policy, Q, visit_counts, rewards = train(agent, env, MAX_NUM_EPISODES,max_eps_length, task3)
         rewards_4_plot.append(rewards)
         
     # Display the learned policy
